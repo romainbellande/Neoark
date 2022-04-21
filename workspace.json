@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "packageManager": "pnpm",
+  "projects": {
+    "api": "packages/api",
+    "client": "packages/client",
+    "client-e2e": "packages/client-e2e",
+    "shared": "packages/shared",
+    "ui": "packages/ui"
+  }
+}

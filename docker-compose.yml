@@ -1,0 +1,100 @@
+version: '3.2'
+
+services:
+  mongo:
+    image: 'mongo:5.0.6-focal'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: $DB_USER
+      MONGO_INITDB_ROOT_PASSWORD: $DB_PASSWORD
+    ports:
+      - 27037:27017
+    volumes:
+      - mongo-data:/data/db
+
+  traefik:
+    image: "traefik:v2.3"
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.useBindPortIP=true"
+      - "traefik.http.routers.traefik=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.entrypoints=https"
+    ports:
+      - "443:443"
+      - "80:80"
+      - "8080:8080"
+      - "8085:8085"
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/config.yml:/etc/traefik/config.yml:ro
+      - ./certs:/etc/certs:ro
+    depends_on:
+      - api
+      - client
+
+  whoami:
+    image: containous/whoami
+    container_name: whoami
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.neoark.localhost`)"
+      - "traefik.http.routers.whoami.tls=true"
+
+  api:
+    image: node:16-buster
+    user: "${UID}:${GID}"
+    working_dir: /home/node
+    command: "yarn start api"
+    environment:
+      NODE_ENV: development
+      NX_DATABASE_URL: "mongodb://${DB_USER}:${DB_PASSWORD}@mongo"
+      NX_PORT: 9000
+      YARN_VERSION: 1.22.5
+      ENVIRONMENT: "development"
+      CRYPTO_KEY: H9r5s$$3*BgUZ
+      CRYPTO_IV_BASE64: kj4O+MR8Bnm3j+RNcFNCXw==
+    volumes:
+      - ./:/home/node
+      - yarn-dir:/usr/local/share/.config/yarn/global
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.server.rule=Host(`api.neoark.localhost`)"
+      - "traefik.http.routers.server.entrypoints=http,https"
+      - 'traefik.http.services.server.loadbalancer.server.port=9000'
+      - "traefik.http.routers.server.tls=true"
+    depends_on:
+      - mongo
+
+  client:
+    image: node:16-buster
+    user: "${UID}:${GID}"
+    working_dir: /home/node
+    command: "yarn start neoark --host 0.0.0.0 --port 80"
+    environment:
+      NODE_ENV: development
+      YARN_VERSION: 1.22.5
+      ENVIRONMENT: "development"
+      NX_API_URL: https://api.neoark.localhost/api
+    volumes:
+      - ./:/home/node
+      - yarn-dir:/usr/local/share/.config/yarn/global
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.client.rule=Host(`neoark.localhost`)"
+      - "traefik.http.routers.client.entrypoints=http,https"
+      - 'traefik.http.services.client.loadbalancer.server.port=80'
+      - "traefik.http.routers.client.tls=true"
+    depends_on:
+      - api
+
+volumes:
+  mongo-data: {}
+  yarn-dir: {}

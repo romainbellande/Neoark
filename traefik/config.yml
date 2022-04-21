@@ -1,0 +1,15 @@
+http:
+  routers:
+    traefik:
+      rule: "Host(`traefik.neoark.localhost`)"
+      service: "api@internal"
+      tls:
+        domains:
+          - main: "neoark.localhost"
+            sans:
+              - "*.neoark.localhost"
+
+tls:
+  certificates:
+    - certFile: "/etc/certs/local-cert.pem"
+      keyFile: "/etc/certs/local-key.pem"

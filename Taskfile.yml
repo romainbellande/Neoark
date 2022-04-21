@@ -1,0 +1,36 @@
+version: '3'
+
+includes:
+  client: ./packages/client
+  api: ./packages/api
+  ui: ./packages/ui
+
+tasks:
+  init:
+    desc: initialize project
+    cmds:
+      - mkcert -install
+      - mkcert -cert-file traefik/certs/local-cert.pem -key-file traefik/certs/local-key.pem "client.localhost" "*.client.localhost"
+      - cp ./.env.dist .env
+      - pnpm install
+
+  start:
+    desc: start all applications
+    cmds:
+      - docker-compose up -d
+
+  down:
+    desc: stop all applications
+    cmds:
+      - docker-compose down
+
+  restart:
+    desc: restart all applications
+    cmds:
+      - task: down
+      - task: start
+
+  lint:fix:
+    desc: fix lint for all applications
+    cmds:
+      - pnpm nx run-many --all --target=lint --fix

@@ -1,0 +1,25 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2015",
+    "module": "esnext",
+    "lib": ["es2017", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@neoark/shared": ["packages/shared/src/index.ts"],
+      "@neoark/shared/*": ["packages/shared/src/lib/*"],
+      "@neoark/ui": ["packages/ui/src/index.ts"],
+      "@neoark/ui/*": ["packages/ui/src/lib/*"]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}
